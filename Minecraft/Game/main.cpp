@@ -26,6 +26,7 @@ void init_terminal()
 	//new_termios = old_termios;
 	//new_termios.c_lfflag &= ~(ICANON | ECHO);
 	//tcsetattr(STDIN_FILENO, TCSANOW, &new_termios);
+	//fcntl(STDIN_FILENO, F_SETFL, fcntl(STDIN_FILENO, F_GETFL, 0) | O_NONBLOCK);
 	//fflush(stdout);
 }
 
@@ -39,14 +40,26 @@ void restore_terminal()
 	//tcsetattr(STDIN_FILENO, TCSANOW, &old_termios);
 }
 
+static char keystate[256] = { 0 };
+
 void process_input()
 {
 	char c;
+
+	std::fill(keystate, keystate + 256, 0);
+
 	if (_kbhit())
 	{
 		c = _getch();
 		std::cout << "input : " << c << '\n';
+		unsigned char uc = (unsigned char)c;
+		keystate[uc] = 1;
 	}
+}
+
+int is_key_pressed(char key)
+{
+	return keystate[(unsigned char)key];
 }
 
 int main()
@@ -56,6 +69,10 @@ int main()
 	{
 		process_input();
 		Sleep(20);
+		if (is_key_pressed('q'))
+		{
+			exit(0);
+		}
 	}
 	restore_terminal();
 
